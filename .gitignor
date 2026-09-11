@@ -1,0 +1,6 @@
+venv
+py cache/
+*.рус
+data/data
+models/
+.ipynb_checkpoints/

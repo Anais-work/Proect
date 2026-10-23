@@ -1,0 +1,75 @@
+# ==============================================================================
+# СПИСОК ВОПРОСОВ К БИЗНЕС-ДАТАСЕТУ ДЛЯ RAG-СИСТЕМЫ С ПЕРЕВОДОМ НА РУССКИЙ ЯЗЫК
+# QUESTIONS & TRANSLATIONS FOR BUSINESS DATASET RAG SYSTEM
+# ==============================================================================
+# Формат:
+# [№] Категория / Category
+# EN: Вопрос на английском языке (для отправки в RAG)
+# RU: Перевод вопроса на русский язык
+# ФАКТЫ ИЗ БАЗЫ: Ключевой ответ, содержащийся в обучающей выборке
+# ==============================================================================
+
+[1] Категория: finance_banking (Финансы и банковская сфера)
+EN: What happened with the interest rates decided by the central bank?
+RU: Что произошло с процентными ставками по решению центрального банка?
+ФАКТЫ ИЗ БАЗЫ: Центральные банки повышали процентные ставки для борьбы с инфляцией (ECB raised rates 9 straight times), хотя в некоторых сегментах и странах ставки снижались для поддержки заемщиков (mortgage rates for first-time buyers).
+
+[2] Категория: technology (Технологии и инновации)
+EN: How many electric vehicle makers registered on the online portal for recycling lithium-ion battery waste, and which brands are mentioned?
+RU: Сколько производителей электромобилей зарегистрировалось на онлайн-портале по утилизации литий-ионных аккумуляторов, и какие бренды упомянуты?
+ФАКТЫ ИЗ БАЗЫ: Не менее 59 производителей электромобилей (EV makers), включая такие бренды, как MG Motor, Ola Electric, Ather Energy, Tata Motors и Mahindra & Mahindra.
+
+[3] Категория: stock_market (Фондовый рынок и инвестиции)
+EN: Why did shares of Adani Power climb, and how much stake was acquired by GQG Partners?
+RU: Почему выросли акции Adani Power, и какую долю приобрела компания GQG Partners?
+ФАКТЫ ИЗ БАЗЫ: Акции Adani Power выросли более чем на 2% после того, как американская инвестиционная фирма GQG Partners вместе с другими инвесторами приобрела 8.1% акций компании более чем за 9000 крор рупий.
+
+[4] Категория: corporate_earnings (Корпоративные доходы и рост)
+EN: What was the economic growth rate recorded in the second quarter of 2023-24, and which sector led the surge?
+RU: Каковы были темпы экономического роста во втором квартале 2023-24 года, и какая отрасль возглавила этот рост?
+ФАКТЫ ИЗ БАЗЫ: Экономика зафиксировала рост на уровне 7.6% во 2-м квартале 2023-24 года (июль-сентябрь), при этом лидировал производственный сектор (manufacturing), подскочивший на 13.9% в годовом выражении.
+
+[5] Категория: government_policy (Государственное регулирование и налоги)
+EN: Under which act has the government brought the Goods and Services Tax Network (GSTN), and what does this change facilitate?
+RU: Под действие какого закона правительство перевело Сеть по налогу на товары и услуги (GSTN), и чему способствует это изменение?
+ФАКТЫ ИЗ БАЗЫ: Правительство включило GSTN под действие Закона о предотвращении отмывания денег (PMLA), что облегчает обмен информацией между налоговыми органами, правоохранительными органами (Enforcement Directorate) и другими ведомствами.
+
+[6] Категория: stock_market (Фондовый рынок и взаимные фонды)
+EN: What record high did inflows into small cap equity mutual funds touch in June?
+RU: Какого рекордного максимума достигли притоки в паевые инвестиционные фонды акций малой капитализации (small cap) в июне?
+ФАКТЫ ИЗ БАЗЫ: Притоки средств в фонды акций малой капитализации (small cap equity mutual funds) достигли рекордного уровня 5471.75 крор рупий в июне на фоне общего ралли на фондовом рынке.
+
+[7] Категория: mergers_acquisitions (Слияния, поглощения и сделки)
+EN: How much in pending dividends does Oil and Natural Gas Corp (ONGC) hope to recover from its stake in Venezuelan projects?
+RU: Какую сумму невыплаченных дивидендов рассчитывает вернуть корпорация ONGC от своей доли в венесуэльских проектах?
+ФАКТЫ ИЗ БАЗЫ: Корпорация ONGC рассчитывает вернуть более 500 миллионов долларов дивидендов, замороженных с 2014 года, благодаря смягчению санкций против Венесуэлы.
+
+[8] Категория: finance_banking (Банковский сектор)
+EN: What is the outlook of domestic rating agency ICRA on the banking sector, and what are the expectations for GNPA levels?
+RU: Каков прогноз рейтингового агентства ICRA по банковскому сектору, и каковы ожидания по уровню безнадежной задолженности (GNPA)?
+ФАКТЫ ИЗ БАЗЫ: Агентство ICRA сохранило позитивный прогноз по банковскому сектору благодаря улучшению качества активов и устойчивому росту кредитования, прогнозируя снижение доли GNPA до 2.8 - 3.1%.
+
+[9] Категория: technology & trade (Технологии и международная торговля)
+EN: What areas are included in the comprehensive economic partnership agreement (CEPA) between India and Chile?
+RU: Какие направления включены в соглашение о всеобъемлющем экономическом партнерстве (CEPA) между Индией и Чили?
+ФАКТЫ ИЗ БАЗЫ: Соглашение охватывает товары и услуги, торговлю, энергетику, технологические инновации и вопросы окружающей среды.
+
+[10] Категория: mergers_acquisitions (Авиация и слияния)
+EN: What plans do Air India and Tata Group have regarding the fleet expansion and merger with Vistara?
+RU: Какие планы у Air India и группы Tata относительно расширения авиапарка и слияния с Vistara?
+ФАКТЫ ИЗ БАЗЫ: Заказ сотен новых самолетов Airbus A350, A320 и Boeing 737, масштабное обновление салонов, интеграция Air India Express с AIX Connect и завершение слияния Air India с Vistara к 2025 году.
+
+# ==============================================================================
+# КОНТРОЛЬНЫЕ ВОПРОСЫ ВНЕ ДАТАСЕТА (ПРОВЕРКА ЗАЩИТЫ ОТ ГАЛЛЮЦИНАЦИЙ)
+# ==============================================================================
+# Модель ОБЯЗАНА вернуть "Not found in documents" / "в документах не найдено"
+
+[11] Out-of-Domain Control #1 (Спорт)
+EN: Who won the UEFA Champions League football tournament in 2024?
+RU: Кто выиграл Лигу чемпионов УЕФА по футболу в 2024 году?
+ОЖИДАЕМЫЙ ОТВЕТ: Not found in documents / в документах не найдено.
+
+[12] Out-of-Domain Control #2 (Кинематограф)
+EN: Which movie won the Oscar for Best Picture at the 96th Academy Awards in 2024?
+RU: Какой фильм получил премию «Оскар» за лучший фильм на 96-й церемонии в 2024 году?
+ОЖИДАЕМЫЙ ОТВЕТ: Not found in documents / в документах не найдено.

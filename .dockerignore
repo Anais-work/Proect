@@ -1,7 +1,20 @@
 venv/
+__pycache__/
+**/__pycache__/
+*.pyc
 .git/
 .dvc/
-__pycache__/
-*.pyc
 .ipynb_checkpoints/
+**/.ipynb_checkpoints/
+models/
+model/
 notebook/
+test/
+
+# Секреты — никогда не попадают в контекст сборки
+.env
+
+# Данные: в образ нужен только готовый индекс FAISS
+data/
+!data/processed/faiss_rag_index.bin
+!data/processed/faiss_chunks_meta.json

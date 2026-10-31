@@ -1,0 +1,17 @@
+services:
+  doc-assistant:
+    build: .
+    image: doc-assistant
+    container_name: doc-assistant
+    ports:
+      - "8000:8000"
+    # Секреты GigaChat берутся из .env при запуске, в образ не попадают
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped

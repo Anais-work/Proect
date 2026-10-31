@@ -1,0 +1,5 @@
+# Зависимости для ноутбуков и подготовки данных (в образ не попадают)
+-r requirements.txt
+scikit-learn
+matplotlib
+jupyter

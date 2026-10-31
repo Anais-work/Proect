@@ -1,7 +1,6 @@
+# Зависимости сервиса (устанавливаются в Docker-образ)
 numpy
 pandas
-scikit-learn
-matplotlib
 requests
 urllib3
 python-dotenv
@@ -11,4 +10,3 @@ faiss-cpu
 fastapi
 uvicorn
 pydantic
-jupyter

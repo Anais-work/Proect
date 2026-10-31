@@ -1,6 +1,6 @@
-venv
-py cache/
-*.рус
+venv/
+__pycache__/
+*.pyc
 data/data
 models/
 .ipynb_checkpoints/

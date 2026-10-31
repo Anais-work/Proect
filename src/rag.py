@@ -16,11 +16,6 @@ from dotenv import load_dotenv
 import torch
 from transformers import AutoTokenizer, AutoModel
 import faiss
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
-import uvicorn
 
 # Подавление предупреждений SSL и HuggingFace
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -156,12 +151,12 @@ class BusinessRAG:
     def search(self, query: str, top_k: int = 5) -> list:
         """
         ШАГ 4 из RAG.pdf:
-        ANN-поиск top-k (от 5 до 10) релевантных чанков по запросу.
+        ANN-поиск top-k (от 1 до 10) релевантных чанков по запросу.
         """
         if self.index is None:
             raise RuntimeError("Индекс FAISS не инициализирован. Вызовите load_or_build_index().")
 
-        k = max(5, min(10, top_k))
+        k = max(1, min(10, top_k))
         q_emb = self.embed_texts([query])
         distances, indices = self.index.search(q_emb, k)
 
@@ -337,14 +332,14 @@ def print_result(res: dict):
 
 
 # =====================================================================
-# FastAPI Сервер для RAG-системы
+# Функции для API-сервиса (используются в src/app.py)
 # =====================================================================
 
 _rag_instance: BusinessRAG = None
 
 
 def get_rag(force_rebuild: bool = False) -> BusinessRAG:
-    """Глобальная инициализация модели BERT и индекса FAISS (один раз при старте сервера)."""
+    """Глобальная инициализация модели BERT и индекса FAISS (один раз)."""
     global _rag_instance
     if _rag_instance is None:
         _rag_instance = BusinessRAG(model_name="bert-base-uncased")
@@ -354,203 +349,31 @@ def get_rag(force_rebuild: bool = False) -> BusinessRAG:
     return _rag_instance
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Загрузка модели BERT и индекса FAISS при запуске FastAPI сервера."""
-    get_rag()
-    yield
+def build_index(force_rebuild: bool = False) -> BusinessRAG:
+    """
+    Строит/загружает индекс FAISS и модель эмбеддингов BERT.
+    Вызывается ОДИН раз при старте сервиса, а не на каждый запрос.
+    Возвращает состояние индекса (index_state).
+    """
+    return get_rag(force_rebuild=force_rebuild)
 
 
-app = FastAPI(
-    title="Business News RAG API",
-    description="API-сервер RAG-системы на базе BERT, FAISS и GigaChat для ответов по бизнес-новостям",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+def rag_answer(question: str, index_state: BusinessRAG, k: int = 3):
+    """
+    Ответ RAG-системы на вопрос.
+    Возвращает кортеж (answer, sources).
+    """
+    if index_state is None:
+        raise RuntimeError("Индекс не загружен. Сначала вызовите build_index().")
+    result = index_state.ask(question=question, top_k=k)
+    return result["answer"], result["sources"]
 
-
-class AskRequest(BaseModel):
-    question: str = Field(
-        ...,
-        min_length=1,
-        description="Вопрос к нейросети (на английском или русском языке)",
-        examples=["What happened with the interest rates decided by the central bank?"],
-    )
-    top_k: int = Field(
-        default=7,
-        ge=5,
-        le=10,
-        description="Количество релевантных фрагментов для поиска в FAISS (от 5 до 10)",
-    )
-
-
-class SourceChunk(BaseModel):
-    chunk_id: int
-    doc_id: int
-    category: str
-    text: str
-    distance: float
-
-
-class AskResponse(BaseModel):
-    question: str
-    answer: str
-    sources: list[SourceChunk]
-    top_k: int
-    usage: dict
-
-
-@app.get("/", response_class=HTMLResponse, summary="Веб-интерфейс для вопросов и ответов")
-def root():
-    return """<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business News RAG — Вопрос-Ответ</title>
-    <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
-        body { background: #f4f6f9; color: #1e293b; margin: 0; padding: 30px 15px; }
-        .container { max-width: 850px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { margin-top: 0; font-size: 24px; color: #0f172a; }
-        .subtitle { color: #64748b; font-size: 14px; margin-bottom: 20px; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 12px; }
-        input[type="text"] { flex: 1; padding: 12px 15px; font-size: 15px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
-        input[type="text"]:focus { border-color: #2563eb; }
-        button { background: #2563eb; color: #fff; border: none; padding: 12px 22px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; }
-        button:hover { background: #1d4ed8; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .examples { font-size: 13px; color: #475569; margin-bottom: 20px; }
-        .examples span { display: inline-block; background: #e2e8f0; padding: 4px 10px; border-radius: 6px; margin: 3px 4px 3px 0; cursor: pointer; }
-        .examples span:hover { background: #cbd5e1; }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-top: 18px; display: none; }
-        .answer-title { font-weight: 700; color: #0f172a; margin-bottom: 8px; font-size: 16px; }
-        .answer-text { font-size: 16px; line-height: 1.55; color: #1e293b; background: #eff6ff; border-left: 4px solid #2563eb; padding: 14px; border-radius: 6px; }
-        .meta { font-size: 13px; color: #64748b; margin-top: 12px; }
-        .sources { margin-top: 16px; }
-        .source-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-size: 13px; }
-        .source-header { font-weight: 600; color: #334155; margin-bottom: 4px; }
-        .footer-links { margin-top: 22px; font-size: 13px; color: #64748b; text-align: right; }
-        .footer-links a { color: #2563eb; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🤖 RAG-система: Бизнес-новости (BERT + FAISS + GigaChat)</h1>
-        <div class="subtitle">Задайте вопрос на английском или русском языке по базе бизнес-новостей</div>
-        <div class="input-group">
-            <input type="text" id="questionInput" placeholder="Введите ваш вопрос..." value="How many electric vehicle makers registered on the online portal for recycling lithium-ion battery waste, and which brands are mentioned?" />
-            <button id="askBtn" onclick="sendQuestion()">Спросить</button>
-        </div>
-        <div class="examples">
-            Примеры:
-            <span onclick="setQ('What happened with the interest rates decided by the central bank?')">Процентные ставки ЦБ</span>
-            <span onclick="setQ('Why did shares of Adani Power climb, and how much stake was acquired by GQG Partners?')">Акции Adani Power</span>
-            <span onclick="setQ('Who won the UEFA Champions League football tournament in 2024?')">Проверка фильтра (Футбол)</span>
-        </div>
-        <div id="resultCard" class="card">
-            <div class="answer-title">Ответ нейросети:</div>
-            <div id="answerBox" class="answer-text"></div>
-            <div id="tokensBox" class="meta"></div>
-            <div id="sourcesBox" class="sources"></div>
-        </div>
-        <div class="footer-links">
-            Техническая документация API: <a href="/docs" target="_blank">Swagger UI (/docs)</a>
-        </div>
-    </div>
-    <script>
-        function setQ(text) {
-            document.getElementById('questionInput').value = text;
-        }
-        async function sendQuestion() {
-            const input = document.getElementById('questionInput');
-            const btn = document.getElementById('askBtn');
-            const card = document.getElementById('resultCard');
-            const answerBox = document.getElementById('answerBox');
-            const tokensBox = document.getElementById('tokensBox');
-            const sourcesBox = document.getElementById('sourcesBox');
-            const q = input.value.trim();
-            if (!q) return;
-
-            btn.disabled = true;
-            btn.textContent = 'Думаю...';
-            card.style.display = 'block';
-            answerBox.textContent = '⏳ Поиск в базе FAISS и генерация ответа через GigaChat...';
-            tokensBox.textContent = '';
-            sourcesBox.innerHTML = '';
-
-            try {
-                const resp = await fetch('/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: q, top_k: 7 })
-                });
-                const data = await resp.json();
-                answerBox.textContent = data.answer || 'Нет ответа';
-                if (data.usage && data.usage.total_tokens !== undefined) {
-                    tokensBox.textContent = `📊 Токены: всего ${data.usage.total_tokens} (промпт: ${data.usage.prompt_tokens || 0}, ответ: ${data.usage.completion_tokens || 0})`;
-                }
-                if (data.sources && data.sources.length > 0 && !data.answer.toLowerCase().includes('not found') && !data.answer.toLowerCase().includes('не найдено')) {
-                    let html = '<div class="answer-title" style="margin-top:14px;font-size:14px;">📚 Найденные источники в базе (FAISS):</div>';
-                    data.sources.forEach((s, idx) => {
-                        html += `<div class="source-item">
-                            <div class="source-header">[${idx + 1}] Документ #${s.doc_id} | Категория: ${s.category} | L2-дистанция: ${s.distance.toFixed(4)}</div>
-                            <div>${s.text}</div>
-                        </div>`;
-                    });
-                    sourcesBox.innerHTML = html;
-                }
-            } catch (err) {
-                answerBox.textContent = 'Ошибка соединения с сервером: ' + err;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Спросить';
-            }
-        }
-    </script>
-</body>
-</html>"""
-
-
-@app.get("/health", summary="Healthcheck")
-def health_check():
-    rag = get_rag()
-    return {
-        "status": "healthy",
-        "index_loaded": rag.index is not None,
-        "total_chunks": rag.index.ntotal if rag.index is not None else 0,
-    }
-
-
-@app.post("/ask", response_model=AskResponse, summary="Задать вопрос RAG-системе (BERT + FAISS + GigaChat)")
-def ask_endpoint(request: AskRequest):
-    question = request.question.strip()
-    if not question:
-        raise HTTPException(status_code=400, detail="Вопрос не может быть пустым.")
-    try:
-        rag = get_rag()
-        result = rag.ask(question=question, top_k=request.top_k)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при обработке запроса: {e}")
-
-
-@app.post("/search", response_model=list[SourceChunk], summary="Поиск релевантных чанков в FAISS без вызова LLM")
-def search_endpoint(request: AskRequest):
-    question = request.question.strip()
-    if not question:
-        raise HTTPException(status_code=400, detail="Поисковый запрос не может быть пустым.")
-    try:
-        rag = get_rag()
-        return rag.search(query=question, top_k=request.top_k)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при поиске в FAISS: {e}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="RAG-система на базе BERT и FAISS по бизнес-датасету")
     parser.add_argument('-q', '--query', type=str, help="Текст вопроса для RAG (на английском или русском)")
-    parser.add_argument('-k', '--top-k', type=int, default=7, help="Количество чанков для поиска (от 5 до 10, по умолчанию 7)")
+    parser.add_argument('-k', '--top-k', type=int, default=3, help="Количество чанков для поиска (от 1 до 10, по умолчанию 3)")
     parser.add_argument('-f', '--file', type=str, help="Путь к текстовому файлу с вопросами для пакетного запуска")
     parser.add_argument('-i', '--interactive', action='store_true', help="Запуск в интерактивном консольном режиме")
     parser.add_argument('-s', '--server', action='store_true', help="Запуск FastAPI веб-сервера")
@@ -560,10 +383,11 @@ def main():
     args = parser.parse_args()
 
     if args.server:
-        get_rag(force_rebuild=args.rebuild_index)
+        import uvicorn
+        sys.path.insert(0, project_root)
         print(f"\n🚀 Запуск FastAPI сервера на http://{args.host}:{args.port}")
         print(f"📖 Интерактивная документация (Swagger UI): http://127.0.0.1:{args.port}/docs\n")
-        uvicorn.run(app, host=args.host, port=args.port)
+        uvicorn.run("src.app:app", host=args.host, port=args.port, app_dir=project_root)
         return
 
     rag = get_rag(force_rebuild=args.rebuild_index)
@@ -609,7 +433,7 @@ def main():
         return
 
     # Демонстрационный режим по умолчанию
-    print("\nЗапуск демонстрационных вопросов (Top-K = 7):\n")
+    print(f"\nЗапуск демонстрационных вопросов (Top-K = {args.top_k}):\n")
     demo_qs = [
         "What happened with the interest rates decided by the central bank?",
         "How many electric vehicle makers registered on the online portal for recycling lithium-ion battery waste?",

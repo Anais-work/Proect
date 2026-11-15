@@ -4,4 +4,8 @@ __pycache__/
 data/data
 models/
 .ipynb_checkpoints/
+.pytest_cache/
+mlflow.db
+mlruns/
+mlartifacts/
 .env

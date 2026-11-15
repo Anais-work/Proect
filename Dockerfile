@@ -11,8 +11,9 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
 # чтобы контейнер не скачивал модель при каждом старте
 RUN python -c "from transformers import AutoTokenizer, AutoModel; AutoTokenizer.from_pretrained('bert-base-uncased'); AutoModel.from_pretrained('bert-base-uncased')"
 
-# Готовый индекс FAISS (только нужные файлы, остальное отсекает .dockerignore)
+# Готовый индекс FAISS и обученная модель классификатора
 COPY data/processed/ ./data/processed/
+COPY model/ ./model/
 
 # Теперь копируем остальной код
 COPY src/ ./src/

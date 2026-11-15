@@ -6,10 +6,15 @@
 Запуск:
     python test/test_api.py
 """
+import os
 import sys
 import requests
 
-BASE_URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
+BASE_URL = (
+    sys.argv[1]
+    if len(sys.argv) > 1 and sys.argv[1].startswith("http")
+    else os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+)
 
 
 def test_health():

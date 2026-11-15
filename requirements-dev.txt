@@ -1,5 +1,8 @@
-# Зависимости для ноутбуков и подготовки данных (в образ не попадают)
+# Зависимости для разработки, обучения и тестирования
 -r requirements.txt
-scikit-learn
+mlflow
 matplotlib
+pytest
+httpx
 jupyter
+notebook
